@@ -292,7 +292,7 @@ String basePath=request.getScheme()+"://"+request.getServerName()+":"+request.ge
 				success:function(data){
 					if (data.code=="1"){
 						//提示成功导入记录条数
-						alert("成功导入"+data.retData+"条记录");
+						alert("成功导入"+data.retDate+"条记录");
 						//关闭模态窗口
 						$("#importActivityModal").modal("hide");
 						//刷新市场活动列表，显示第一页数据，保持每页显示条数不变
