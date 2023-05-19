@@ -25,27 +25,27 @@
 </head>
 <script type="text/javascript">
     function allClick() {
-        //取得全选复选框的选中未选 中状态
-        var ischeck=$("#all").prop("checked");
-        //将此状态赋值给每个商品列表里的复选框
-        $("input[name=ck]").each(function () {
-            this.checked=ischeck;
+        //获得全选按钮的状态
+        var flag = $("#all").prop("checked");
+        //将状态赋值给下面的全部复选框
+        $("input[name='ck']").each(function () {
+            this.checked = flag;
         });
     }
-
+    //点击单个复选框时修改全选状态
     function ckClick() {
-        //取得所有name=ck的被选中的复选框
-        var length=$("input[name=ck]:checked").length;
-//取得所有name=ck的复选框
-        var len=$("input[name=ck]").length;
-        //比较
-        if(len == length){
+        //获取复选框数量
+        var fiveLength = $("input[name='ck']").length;
+        //获取被选中复选框的数量
+        var checkdeLength = $("input[name='ck']:checked").length
+        //判断全选复选框是否选中
+        if (fiveLength==checkdeLength){
             $("#all").prop("checked",true);
-        }else
-        {
+        }else{
             $("#all").prop("checked",false);
         }
     }
+
 </script>
 <body>
 <div id="brall">
@@ -95,7 +95,8 @@
                         </tr>
                         <c:forEach items="${info.list}" var="p">
                             <tr>
-                                <td valign="center" align="center"><input type="checkbox" name="ck" id="ck" value="${p.pId}" onclick="ckClick()"></td>
+                                <td valign="center" align="center">
+                                    <input type="checkbox" name="ck" id="ck" value="${p.pId}" onclick="ckClick()"></td>
                                 <td>${p.pName}</td>
                                 <td>${p.pContent}</td>
                                 <td>${p.pPrice}</td>
@@ -106,7 +107,7 @@
                                     <%--&nbsp;&nbsp;&nbsp;<a href="${pageContext.request.contextPath}/admin/product?flag=one&pid=${p.pId}">修改</a></td>--%>
                                 <td>
                                     <button type="button" class="btn btn-info "
-                                            onclick="one(${p.pId},${info.pageNum})">编辑
+                                            onclick="one(${p.pId})">编辑
                                     </button>
                                     <button type="button" class="btn btn-warning" id="mydel"
                                             onclick="del(${p.pId})">删除
@@ -181,40 +182,60 @@
     //批量删除
     function deleteBatch() {
 
-            //取得所有被选中删除商品的pid
-            var zhi=$("input[name=ck]:checked");
-            var str="";
-            var id="";
-            if(zhi.length==0){
-                alert("请选择将要删除的商品！");
-            }else{
-                // 有选中的商品，则取出每个选 中商品的ID，拼提交的ID的数据
-                if(confirm("您确定删除"+zhi.length+"条商品吗？")){
-                //拼接ID
-                    $.each(zhi,function (index,item) {
-
-                        id=$(item).val(); //22 33
-                        alert(id);
-                        if(id!=null)
-                            str += id+",";  //22,33,44
-                    });
-alert(str+"11111111");
-                    //发送请求到服务器端
-                   // window.location="${pageContext.request.contextPath}/prod/deletebatch.action?str="+str;
-
-                }
+        //根据长度判断是否选中商品
+        var cks = $("input[name='ck']:checked");
+        // 获取选中的对象,获取value值进行字符串拼接
+        if (cks.length==0){
+            alert("当前没有选中商品");
+        }else{
+            var str = "";
+            var pid = "";
+            if (confirm("当前选中条"+cks.length+"记录，是否删除")){
+                //遍历id
+                $.each(cks,function () {
+                    pid = $(this).val();//取出每一个选中的id。
+                    //进行非空判断
+                    if (pid != null){
+                        str += pid+",";//1,4,5
+                    }
+                });
+                //通过ajax发送批量删除的请求
+                $.ajax({
+                    url:"${pageContext.request.contextPath}/prod/deleteBatch.action",
+                    data:{"pids":str},
+                    type:"post",
+                    dataType:"text",
+                    success:function (msg) {
+                        alert(msg);//返回的处理信息
+                        //重新加载页面上显示商品数据的容器
+                        $("#table").load("http://localhost:8080/admin/product.jsp #table");
+                    }
+                });
+            }
         }
+
     }
     //单个删除
     function del(pid) {
-        if (confirm("确定删除吗")) {
-          //向服务器提交请求完成删除
-            window.location="${pageContext.request.contextPath}/prod/delete.action?pid="+pid;
+        //弹框提示
+        if (confirm("确定删除吗")){
+            //发送ajax请求删除
+            $.ajax({
+                url:"${pageContext.request.contextPath}/prod/delete.action",
+                data:{"pid":pid},
+                type:"post",
+                dataType:"text",
+                success:function(msg) {
+                    alert(msg);
+                    $("#table").load("http://localhost:8080/admin/product.jsp #table");
+                }
+            })
         }
     }
 
-    function one(pid, ispage) {
-        location.href = "${pageContext.request.contextPath}/prod/one.action?pid=" + pid + "&page=" + ispage;
+    function one(pid) {
+        //向服务器发送请求，提交商品id
+        location.href="${pageContext.request.contextPath}/prod/one.action?pid="+pid;
     }
 </script>
 <!--分页的AJAX实现-->

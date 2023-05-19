@@ -58,7 +58,6 @@
 				<form action="${pageContext.request.contextPath}/prod/update.action" enctype="multipart/form-data" method="post" id="myform">
 					<input type="hidden" value="${prod.pId}" name="pId">
 					<input type="hidden" value="${prod.pImage}" name="pImage">
-					<input type="hidden" value="${page}" name="page">
 					<table>
 						<tr>
 							<td class="one">商品名称</td>
@@ -116,7 +115,7 @@
 							<td class="one">类别</td>
 							<td>
 								<select name="typeId">
-									<c:forEach items="${ptlist}" var="type">
+									<c:forEach items="${typeList}" var="type">
 										<option value="${type.typeId}"
 												<c:if test="${type.typeId==prod.typeId}">
 													selected="selected"

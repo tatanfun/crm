@@ -4,6 +4,7 @@ import com.github.pagehelper.PageInfo;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
@@ -89,23 +90,105 @@ public class ProductInfoAction {
         int num = -1;
         try {
             num = productInfoService.save(info);
-            System.out.println("呵");
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println("呵呵");
         }
         if(num > 0){
             request.setAttribute("msg","增加成功");
-            System.out.println(num);
         }else{
             request.setAttribute("msg","增加失败");
-            System.out.println(num);
         }
+        //清空saveFileName变量中的内容，为了下次增加或修改的异步ajax的上传处理
+        saveFileName= "";
         //增加成功后重新访问数据库，跳转到分页显示的action上
 
         return "forward:/prod/split.action";
-
     }
+
+    @RequestMapping("/one")
+    public String one(int pid, Model model){
+        ProductInfo info = productInfoService.getById(pid);
+        model.addAttribute("prod",info);
+        return "update";
+    }
+
+    @RequestMapping("/update")
+    public String update(ProductInfo info,HttpServletRequest request){
+        //如果ajax异步上传过图片，则saveFileName里有上传的图片名称；
+        // 如果没有异步上传过，saveFileName="",实体类info就使用隐藏表单域提交上来的pImage原始图片的名称;
+        if (!saveFileName.equals("")){
+            info.setpImage(saveFileName);
+        }
+
+        //完成更新处理
+        int num = -1;
+        try {
+            num = productInfoService.update(info);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        if (num > 0){
+            //更新成功
+            request.setAttribute("msg","更新成功");
+        }else{
+            //更新失败
+            request.setAttribute("msg","更新失败");
+        }
+
+        //处理完更新后，saveFileName里可能有数据，下一次更新时使用这个变量就会出错，需要手动清空saveFileName.
+        saveFileName="";
+
+        //重定向:redirect，请求转发：forward
+        return "forward:/prod/split.action";
+    }
+
+    @RequestMapping("/delete")
+    public String delete(int pid,HttpServletRequest request){
+        int num = -1;
+
+        try {
+            num = productInfoService.delete(pid);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        if (num > 0){
+            request.setAttribute("msg","删除成功");
+        }else{
+            request.setAttribute("msg","删除失败");
+        }
+
+        //删除完成后跳转到分页显示
+        return "forward:/prod/deleteAjaxSplit.action";
+    }
+
+    @ResponseBody
+    @RequestMapping(value = "/deleteAjaxSplit",produces = "text/html;charset=UTF-8")
+    public Object deleteAjaxSplit(HttpServletRequest request){
+        //取出第一页的数据
+        PageInfo info = productInfoService.splitPage(1,PAGE_SIZE);
+        request.getSession().setAttribute("info",info);
+        return request.getAttribute("msg");
+    }
+
+    //批量删除商品
+    @RequestMapping("/deleteBatch")
+    public String deleteBatch(String pids,HttpServletRequest request){
+        //pids="1,4,5..."---> ps[1,4,5]
+        //截取前端提交的商品id的字符串，转换成数组
+        String []ps = pids.split(",");
+        try {
+            int num = productInfoService.deleteBatch(ps);
+            if (num > 0){
+                request.setAttribute("msg","批量删除成功");
+            }else{
+                request.setAttribute("msg","批量删除失败");
+            }
+        } catch (Exception e) {
+            request.setAttribute("msg","不可以删除哦");
+        }
+        return "forward:/prod/deleteAjaxSplit.action";
+    }
+
 }
 
 
