@@ -266,4 +266,36 @@
       #{pid}
     </foreach>
   </delete>
+
+  <!--多条件查询
+  List<ProductInfo> selectCondition(ProductInfo vo);
+  -->
+  <select id="selectCondition" parameterType="pojo.vo.ProductInfoVo" resultMap="BaseResultMap">
+    select <include refid="Base_Column_List"></include>
+    from product_info
+    <!--拼接条件-->
+    <where>
+      <!--判断商品名称是否为空，不为空则进行模糊查询-->
+      <if test="pname != null and pname !=''">
+        and p_name like '%${pname}%'
+      </if>
+      <!--判断商品名称是否为空，不为空则拼接查询条件-->
+      <if test="typeid != null and typeid != -1">
+        and type_id =#{typeid}
+      </if>
+      <!--如果最低价格不为空，最高价格为空，查询大于最低价格的所有商品-->
+      <if test="(lprice != null and lprice != '') and (hprice == null or hprice =='')">
+        and p_price &gt;= #{lprice}
+      </if>
+      <!--如果最高价格不为空，最低价格为空，查询小于最高价格的所有商品-->
+      <if test="(hprice != null and hprice !='') and ( lprice == null or lprice == '')">
+        and p_price &lt;= #{hprice}
+      </if>
+      <!--如果最高价格和最低价格都不为空，则查询区间内的商品-->
+      <if test="(lprice !=null and lprice != '') and (hprice != null and hprice !='')">
+        and p_price between #{lprice} and #{hprice}
+      </if>
+    </where>
+    order by p_id desc
+  </select>
 </mapper>

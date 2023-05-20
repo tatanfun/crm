@@ -57,12 +57,12 @@
             商品名称：<input name="pname" id="pname">&nbsp;&nbsp;&nbsp;
             商品类型：<select name="typeid" id="typeid">
             <option value="-1">请选择</option>
-            <c:forEach items="${ptlist}" var="pt">
+            <c:forEach items="${typeList}" var="pt">
                 <option value="${pt.typeId}">${pt.typeName}</option>
             </c:forEach>
         </select>&nbsp;&nbsp;&nbsp;
             价格：<input name="lprice" id="lprice">-<input name="hprice" id="hprice">
-            <input type="button" value="查询" onclick="ajaxsplit(${info.pageNum})">
+            <input type="button" value="查询" onclick="condition()">
         </form>
     </div>
     <br>
@@ -70,7 +70,6 @@
 
         <c:choose>
             <c:when test="${info.list.size()!=0}">
-
                 <div id="top">
                     <input type="checkbox" id="all" onclick="allClick()" style="margin-left: 50px">&nbsp;&nbsp;全选
                     <a href="${pageContext.request.contextPath}/admin/addproduct.jsp">
@@ -107,10 +106,10 @@
                                     <%--&nbsp;&nbsp;&nbsp;<a href="${pageContext.request.contextPath}/admin/product?flag=one&pid=${p.pId}">修改</a></td>--%>
                                 <td>
                                     <button type="button" class="btn btn-info "
-                                            onclick="one(${p.pId})">编辑
+                                            onclick="one(${p.pId},${info.pageNum})">编辑
                                     </button>
                                     <button type="button" class="btn btn-warning" id="mydel"
-                                            onclick="del(${p.pId})">删除
+                                            onclick="del(${p.pId},${info.pageNum})">删除
                                     </button>
                                 </td>
                             </tr>
@@ -216,13 +215,18 @@
 
     }
     //单个删除
-    function del(pid) {
+    function del(pid,page) {
         //弹框提示
         if (confirm("确定删除吗")){
+            //取出查询条件
+            var pname = $("#pname").val();
+            var typeid = $("#typeid").val();
+            var lprice = $("#lprice").val();
+            var hprice = $("#hprice").val();
             //发送ajax请求删除
             $.ajax({
-                url:"${pageContext.request.contextPath}/prod/delete.action",
-                data:{"pid":pid},
+                url:"${pageContdext.request.contextPath}/prod/delete.action",
+                data:{"pid":pid,"page":page,"pname":pname,"typeid":typeid,"lprice":lprice,"hprice":hprice},
                 type:"post",
                 dataType:"text",
                 success:function(msg) {
@@ -233,27 +237,54 @@
         }
     }
 
-    function one(pid) {
+    function one(pid,page) {
+        //取出查询条件
+        var pname = $("#pname").val();
+        var typeid = $("#typeid").val();
+        var lprice = $("#lprice").val();
+        var hprice = $("#hprice").val();
         //向服务器发送请求，提交商品id
-        location.href="${pageContext.request.contextPath}/prod/one.action?pid="+pid;
+        var str = "?pid="+pid+"&page="+page+"&pname="+pname+"&typeid="+typeid+"&lprice="+lprice+"&hprice="+hprice;
+        location.href="${pageContext.request.contextPath}/prod/one.action" + str;
     }
 </script>
 <!--分页的AJAX实现-->
 <script type="text/javascript">
     function ajaxsplit(page) {
+        //取出查询条件
+        var pname = $("#pname").val();
+        var typeid = $("#typeid").val();
+        var lprice = $("#lprice").val();
+        var hprice = $("#hprice").val();
         //异步ajax分页请求
         $.ajax({
         url:"${pageContext.request.contextPath}/prod/ajaxsplit.action",
-            data:{"page":page},
+            data:{"page":page,"pname":pname,"typeid":typeid,"lprice":lprice,"hprice":hprice},
             type:"post",
             success:function () {
                 //重新加载分页显示的组件table
                 //location.href---->http://localhost:8080/admin/login.action
                 $("#table").load("http://localhost:8080/admin/product.jsp #table");
             }
-        })
-    };
+        });
+    }
 
+    function condition() {
+        //取出查询条件
+        var pname = $("#pname").val();
+        var typeid = $("#typeid").val();
+        var lprice = $("#lprice").val();
+        var hprice = $("#hprice").val();
+        $.ajax({
+            url:"${pageContext.request.contextPath}/prod/ajaxsplit.action",
+            type:"post",
+            data:{"pname":pname,"typeid":typeid,"lprice":lprice,"hprice":hprice},
+            success:function () {
+                //刷新显示数据的容器
+                $("#table").load("http://localhost:8080/admin/product.jsp #table");
+            }
+        });
+    }
 </script>
 
 </html>

@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import pojo.ProductInfo;
 import pojo.ProductInfoExample;
+import pojo.vo.ProductInfoVo;
 import service.ProductInfoService;
 
 import java.util.List;
@@ -68,4 +69,18 @@ public class ProductInfoServiceImpl implements ProductInfoService {
     public int deleteBatch(String []ids) {
         return productInfoMapper.deleteBatch(ids);
     }
+
+    @Override
+    public List<ProductInfo> selectCondition(ProductInfoVo vo) {
+        return productInfoMapper.selectCondition(vo);
+    }
+
+    @Override
+    public PageInfo<ProductInfo> splitPageVo(ProductInfoVo vo, int pageSize) {
+        //取出集合之前，先设置PageHelper.startPage()插件的属性
+        PageHelper.startPage(vo.getPage(),pageSize);
+        List<ProductInfo> list = productInfoMapper.selectCondition(vo);
+        return new PageInfo<>(list);
+    }
+
 }

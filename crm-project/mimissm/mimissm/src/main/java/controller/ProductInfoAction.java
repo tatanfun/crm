@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import pojo.ProductInfo;
+import pojo.vo.ProductInfoVo;
 import service.ProductInfoService;
 import utils.FileNameUtil;
 
@@ -43,8 +44,15 @@ public class ProductInfoAction {
     //显示第一页的五条记录
     @RequestMapping("/split")
     public String split(HttpServletRequest request){
-        //获取第一页数据
-        PageInfo info = productInfoService.splitPage(1,PAGE_SIZE);
+        PageInfo info = null;
+        Object  vo = request.getSession().getAttribute("prodVo");
+        if (vo != null){
+            info = productInfoService.splitPageVo((ProductInfoVo)vo,PAGE_SIZE);
+            request.getSession().removeAttribute("prodVo");
+        }else{
+            //获取第一页数据
+            info = productInfoService.splitPage(1,PAGE_SIZE);
+        }
         request.setAttribute("info",info);
         return "product";
     }
@@ -52,10 +60,18 @@ public class ProductInfoAction {
     //ajax分页处理
     @ResponseBody
     @RequestMapping("/ajaxsplit")
-    public void ajaxSplit(int page, HttpSession session){
+    public void ajaxSplit(ProductInfoVo vo, HttpSession session){
         //取得当前page参数的页面的数据
-        PageInfo info = productInfoService.splitPage(page,PAGE_SIZE);
+        PageInfo info = productInfoService.splitPageVo(vo,PAGE_SIZE);
         session.setAttribute("info",info);
+    }
+
+    //多条件查询功能实现
+    @ResponseBody
+    @RequestMapping("/condition")
+    public void condition(ProductInfoVo vo, HttpSession session){
+        List<ProductInfo> list = productInfoService.selectCondition(vo);
+        session.setAttribute("list",list);
     }
 
     //异步ajax文件上传处理
@@ -106,9 +122,11 @@ public class ProductInfoAction {
     }
 
     @RequestMapping("/one")
-    public String one(int pid, Model model){
+    public String one(int pid,ProductInfoVo vo, Model model,HttpSession session){
         ProductInfo info = productInfoService.getById(pid);
         model.addAttribute("prod",info);
+        //将多个条件放入session中，更新完成后、分页时读取条件和页码
+        session.setAttribute("prodVo",vo);
         return "update";
     }
 
@@ -137,13 +155,12 @@ public class ProductInfoAction {
 
         //处理完更新后，saveFileName里可能有数据，下一次更新时使用这个变量就会出错，需要手动清空saveFileName.
         saveFileName="";
-
         //重定向:redirect，请求转发：forward
         return "forward:/prod/split.action";
     }
 
     @RequestMapping("/delete")
-    public String delete(int pid,HttpServletRequest request){
+    public String delete(int pid, ProductInfoVo vo, HttpServletRequest request){
         int num = -1;
 
         try {
@@ -153,6 +170,7 @@ public class ProductInfoAction {
         }
         if (num > 0){
             request.setAttribute("msg","删除成功");
+            request.getSession().setAttribute("deleteProdVo",vo);
         }else{
             request.setAttribute("msg","删除失败");
         }
@@ -165,7 +183,13 @@ public class ProductInfoAction {
     @RequestMapping(value = "/deleteAjaxSplit",produces = "text/html;charset=UTF-8")
     public Object deleteAjaxSplit(HttpServletRequest request){
         //取出第一页的数据
-        PageInfo info = productInfoService.splitPage(1,PAGE_SIZE);
+        PageInfo info = null;
+        Object vo = request.getSession().getAttribute("deleteProdVo");
+        if (vo != null){
+            info = productInfoService.splitPageVo((ProductInfoVo)vo,PAGE_SIZE);
+        }else{
+            info = productInfoService.splitPage(1,PAGE_SIZE);
+        }
         request.getSession().setAttribute("info",info);
         return request.getAttribute("msg");
     }
@@ -188,6 +212,8 @@ public class ProductInfoAction {
         }
         return "forward:/prod/deleteAjaxSplit.action";
     }
+
+
 
 }
 

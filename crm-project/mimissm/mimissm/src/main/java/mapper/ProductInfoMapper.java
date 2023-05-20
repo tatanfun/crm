@@ -4,6 +4,7 @@ import java.util.List;
 import org.apache.ibatis.annotations.Param;
 import pojo.ProductInfo;
 import pojo.ProductInfoExample;
+import pojo.vo.ProductInfoVo;
 
 public interface ProductInfoMapper {
     int countByExample(ProductInfoExample example);
@@ -30,4 +31,7 @@ public interface ProductInfoMapper {
 
     //批量删除商品
     int deleteBatch(String []ids);
+
+    //多条件查询商品
+    List<ProductInfo> selectCondition(ProductInfoVo vo);
 }
